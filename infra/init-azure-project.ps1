@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
   [string]$SubscriptionId,
-  [string]$ResourceGroup = "rg-swu-weekly-eastus",
-  [string]$Location = "eastus",
+  [string]$ResourceGroup = "rg-swu-weekly-eastus2",
+  [string]$Location = "eastus2",
   [string]$ContainerRegistry,
   [string]$ContainerApp = "swu-weekly-bot",
   [string]$ContainerEnvironment = "aca-swu-weekly",
@@ -45,8 +45,16 @@ Invoke-Az account set --subscription $SubscriptionId
 $tenantId = Invoke-Az account show --query tenantId --output tsv
 
 if (-not $ContainerRegistry) {
-  $suffix = ([Guid]::NewGuid().ToString("N")).Substring(0, 10)
-  $ContainerRegistry = "acrswuweekly$suffix"
+  $existingRegistries = @(Invoke-Az acr list --query "[?starts_with(name, 'acrswuweekly')].name" --output tsv | Where-Object { $_ })
+  if ($existingRegistries.Count -eq 1) {
+    $ContainerRegistry = $existingRegistries[0].Trim()
+    Write-Host "Reutilizando ACR existente: $ContainerRegistry"
+  } elseif ($existingRegistries.Count -gt 1) {
+    throw "Foram encontrados múltiplos ACRs do SWU Weekly. Informe -ContainerRegistry explicitamente."
+  } else {
+    $suffix = ([Guid]::NewGuid().ToString("N")).Substring(0, 10)
+    $ContainerRegistry = "acrswuweekly$suffix"
+  }
 }
 if ($ContainerRegistry -notmatch '^[a-z0-9]{5,50}$') { throw "ContainerRegistry deve ter 5-50 caracteres, somente letras minúsculas e números." }
 

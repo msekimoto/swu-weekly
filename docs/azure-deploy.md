@@ -10,7 +10,7 @@ O caminho recomendado é executar um único script, que cria a infraestrutura, c
 ./infra/init-azure-project.ps1
 ```
 
-Ele usa a assinatura Azure já selecionada e gera um nome único para o ACR. Para selecionar outra assinatura ou definir um nome de ACR, passe `-SubscriptionId` e `-ContainerRegistry`.
+Ele usa a assinatura Azure já selecionada, cria os recursos em `eastus2` e gera um nome único para o ACR. Se uma tentativa anterior já tiver criado um único ACR com o prefixo `acrswuweekly`, ele o reutiliza automaticamente. Para selecionar outra assinatura, região ou nome de ACR, passe `-SubscriptionId`, `-Location` ou `-ContainerRegistry`.
 
 ## Alternativa: criar somente os recursos Azure
 
@@ -24,7 +24,7 @@ Get-Content .env | Where-Object { $_ -match '^[^#].+=' } | ForEach-Object {
 ./infra/bootstrap-azure.ps1 -SubscriptionId '<subscription-id-real>' -ContainerRegistry '<nome-unico-do-acr>'
 ```
 
-Use a Subscription ID real, sem os caracteres `<` e `>`. O padrão é `eastus`, pois a assinatura Azure for Students deste ambiente não permite `brazilsouth`. O nome do ACR deve ser globalmente único, somente letras/números, e a senha do Discord nunca é enviada ao GitHub. O script entrega o token e a connection string do Neon diretamente como secrets da Container App.
+Use uma Subscription ID real, sem os caracteres `<` e `>`. O padrão é `eastus2`: `eastus` já está ocupado pelo ambiente do outro projeto, e assinaturas Azure for Students permitem apenas um Container Apps Environment por região. O nome do ACR deve ser globalmente único, somente letras/números, e a senha do Discord nunca é enviada ao GitHub. O script entrega o token e a connection string do Neon diretamente como secrets da Container App.
 
 ## 2. Autorizar GitHub Actions com OIDC
 
@@ -36,7 +36,7 @@ Crie uma identidade federada para `repo:msekimoto/swu-weekly:environment:product
 
 Cadastre estes *GitHub Actions variables*:
 
-- `AZURE_RESOURCE_GROUP` (por padrão `rg-swu-weekly-eastus`)
+- `AZURE_RESOURCE_GROUP` (por padrão `rg-swu-weekly-eastus2`)
 - `AZURE_CONTAINER_REGISTRY` (somente o nome, sem `.azurecr.io`)
 - `AZURE_CONTAINER_APP` (por padrão `swu-weekly-bot`)
 
