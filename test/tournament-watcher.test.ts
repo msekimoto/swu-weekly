@@ -16,3 +16,11 @@ test("emite atualização quando um resultado chega do Melee", async () => {
   await watcher.poll();
   assert.deepEqual(events, ["results-updated", "pairings-changed", "round-complete"]);
 });
+
+test("emite snapshot pronto na primeira leitura", async () => {
+  const watcher = new TournamentWatcher(source(null), "457371", 30_000);
+  const events: string[] = [];
+  watcher.on("event", (event) => events.push(event.type));
+  await watcher.poll();
+  assert.deepEqual(events, ["snapshot-ready"]);
+});

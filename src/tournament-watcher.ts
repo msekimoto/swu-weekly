@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import type { Match, MeleeSource, TournamentSnapshot } from "./types.js";
 
 export type TournamentEvent =
+  | { type: "snapshot-ready"; snapshot: TournamentSnapshot }
   | { type: "round-started"; snapshot: TournamentSnapshot }
   | { type: "pairings-changed"; snapshot: TournamentSnapshot }
   | { type: "results-updated"; snapshot: TournamentSnapshot; changedMatches: Match[] }
@@ -40,7 +41,7 @@ export class TournamentWatcher extends EventEmitter {
 
   private publishChanges(next: TournamentSnapshot): void {
     const previous = this.current;
-    if (!previous) return;
+    if (!previous) { this.emit("event", { type: "snapshot-ready", snapshot: next } satisfies TournamentEvent); return; }
     if (previous.round.id !== next.round.id) { this.emit("event", { type: "round-started", snapshot: next } satisfies TournamentEvent); return; }
     const priorByTable = new Map(previous.matches.map((match) => [match.table, match]));
     const changedResults = next.matches.filter((match) => {

@@ -21,13 +21,10 @@ let timerRoundId: number | undefined;
 client.once(Events.ClientReady, async (readyClient) => {
   try {
     await registerCommands();
-    const snapshot = await watcher.poll();
-    if (config.announceOnStart) await publishRound(snapshot);
-    else scheduleRoundTimers(snapshot);
     watcher.start();
     console.log(`Bot conectado como ${readyClient.user.tag}; acompanhando Melee ${config.tournamentId}.`);
   } catch (error) {
-    console.error("Não foi possível iniciar o bot. Confirme que ele foi instalado no servidor configurado e que possui acesso ao canal de anúncios.", error);
+    console.error("Não foi possível registrar os comandos. Confirme que o bot foi instalado no servidor configurado.", error);
     client.destroy();
     process.exitCode = 1;
   }
@@ -45,6 +42,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 watcher.on("event", async (event: TournamentEvent) => {
   try {
+    if (event.type === "snapshot-ready") {
+      if (config.announceOnStart) await publishRound(event.snapshot);
+      else scheduleRoundTimers(event.snapshot);
+    }
     if (event.type === "round-started") await publishRound(event.snapshot);
     if (event.type === "pairings-changed") await (await announcements()).send({ content: "Os pareamentos foram atualizados no Melee.", embeds: [roundEmbed(event.snapshot, `⚔️ ${event.snapshot.round.name} atualizada`)] });
     if (event.type === "results-updated") await (await announcements()).send(`Resultado atualizado no Melee:\n${resultsText(event.changedMatches)}`);
