@@ -11,10 +11,10 @@ Get-Content .env | Where-Object { $_ -match '^[^#].+=' } | ForEach-Object {
   $name, $value = $_ -split '=', 2
   [Environment]::SetEnvironmentVariable($name, $value, 'Process')
 }
-./infra/bootstrap-azure.ps1 -SubscriptionId '<subscription-id>' -ContainerRegistry '<nome-unico-do-acr>'
+./infra/bootstrap-azure.ps1 -SubscriptionId '<subscription-id-real>' -ContainerRegistry '<nome-unico-do-acr>'
 ```
 
-O nome do ACR deve ser globalmente único, somente letras/números, e a senha do Discord nunca é enviada ao GitHub. O script entrega o token e a connection string do Neon diretamente como secrets da Container App.
+Use a Subscription ID real, sem os caracteres `<` e `>`. O padrão é `eastus`, pois a assinatura Azure for Students deste ambiente não permite `brazilsouth`. O nome do ACR deve ser globalmente único, somente letras/números, e a senha do Discord nunca é enviada ao GitHub. O script entrega o token e a connection string do Neon diretamente como secrets da Container App.
 
 ## 2. Autorizar GitHub Actions com OIDC
 
@@ -26,7 +26,7 @@ Crie uma identidade federada para `repo:msekimoto/swu-weekly:environment:product
 
 Cadastre estes *GitHub Actions variables*:
 
-- `AZURE_RESOURCE_GROUP` (por padrão `rg-swu-weekly`)
+- `AZURE_RESOURCE_GROUP` (por padrão `rg-swu-weekly-eastus`)
 - `AZURE_CONTAINER_REGISTRY` (somente o nome, sem `.azurecr.io`)
 - `AZURE_CONTAINER_APP` (por padrão `swu-weekly-bot`)
 

@@ -1,26 +1,36 @@
+[CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)][string]$SubscriptionId,
-  [string]$ResourceGroup = "rg-swu-weekly",
-  [string]$Location = "brazilsouth",
+  [string]$ResourceGroup = "rg-swu-weekly-eastus",
+  [string]$Location = "eastus",
   [Parameter(Mandatory = $true)][string]$ContainerRegistry,
   [string]$ContainerApp = "swu-weekly-bot",
   [string]$ContainerEnvironment = "aca-swu-weekly"
 )
 
+$ErrorActionPreference = "Stop"
+
+function Invoke-Az {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+  & az @Arguments
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao executar: az $($Arguments -join ' ')" }
+}
+
 $required = "DISCORD_TOKEN", "DISCORD_APPLICATION_ID", "DISCORD_GUILD_ID", "DISCORD_CHANNEL_ID", "MELEE_TOURNAMENT_ID", "DATABASE_URL"
 $missing = $required | Where-Object { -not (Get-Item "Env:$_" -ErrorAction SilentlyContinue).Value }
 if ($missing) { throw "Defina estas variáveis de ambiente antes de executar: $($missing -join ', ')" }
 
-az account set --subscription $SubscriptionId
-az extension add --name containerapp --upgrade --only-show-errors
-az group create --name $ResourceGroup --location $Location --output none
-az acr create --name $ContainerRegistry --resource-group $ResourceGroup --sku Basic --admin-enabled true --output none
-az acr build --registry $ContainerRegistry --image "swu-weekly:initial" .
-az containerapp env create --name $ContainerEnvironment --resource-group $ResourceGroup --location $Location --output none
-$acrPassword = az acr credential show --name $ContainerRegistry --query "passwords[0].value" --output tsv
-$acrUsername = az acr credential show --name $ContainerRegistry --query username --output tsv
+Invoke-Az account set --subscription $SubscriptionId
+Invoke-Az extension add --name containerapp --upgrade --only-show-errors
+Invoke-Az group create --name $ResourceGroup --location $Location --output none
+Invoke-Az acr create --name $ContainerRegistry --resource-group $ResourceGroup --sku Basic --admin-enabled true --output none
+Invoke-Az acr build --registry $ContainerRegistry --image "swu-weekly:initial" .
+Invoke-Az containerapp env create --name $ContainerEnvironment --resource-group $ResourceGroup --location $Location --output none
+$acrPassword = Invoke-Az acr credential show --name $ContainerRegistry --query "passwords[0].value" --output tsv
+$acrUsername = Invoke-Az acr credential show --name $ContainerRegistry --query username --output tsv
+$databaseUrlBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:DATABASE_URL))
 
-az containerapp create `
+Invoke-Az containerapp create `
   --name $ContainerApp `
   --resource-group $ResourceGroup `
   --environment $ContainerEnvironment `
@@ -29,8 +39,8 @@ az containerapp create `
   --registry-username $acrUsername `
   --registry-password $acrPassword `
   --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 1 --ingress disabled `
-  --secrets "discord-token=$env:DISCORD_TOKEN" "database-url=$env:DATABASE_URL" `
-  --env-vars "DISCORD_TOKEN=secretref:discord-token" "DATABASE_URL=secretref:database-url" "DISCORD_APPLICATION_ID=$env:DISCORD_APPLICATION_ID" "DISCORD_GUILD_ID=$env:DISCORD_GUILD_ID" "DISCORD_CHANNEL_ID=$env:DISCORD_CHANNEL_ID" "MELEE_TOURNAMENT_ID=$env:MELEE_TOURNAMENT_ID" "POLL_INTERVAL_SECONDS=30" "ROUND_DURATION_MINUTES=45" "TIMEZONE=America/Sao_Paulo" "ANNOUNCE_ON_START=false" `
+  --secrets "discord-token=$env:DISCORD_TOKEN" "database-url-base64=$databaseUrlBase64" `
+  --env-vars "DISCORD_TOKEN=secretref:discord-token" "DATABASE_URL_BASE64=secretref:database-url-base64" "DISCORD_APPLICATION_ID=$env:DISCORD_APPLICATION_ID" "DISCORD_GUILD_ID=$env:DISCORD_GUILD_ID" "DISCORD_CHANNEL_ID=$env:DISCORD_CHANNEL_ID" "MELEE_TOURNAMENT_ID=$env:MELEE_TOURNAMENT_ID" "POLL_INTERVAL_SECONDS=30" "ROUND_DURATION_MINUTES=45" "TIMEZONE=America/Sao_Paulo" "ANNOUNCE_ON_START=false" `
   --output none
 
-Write-Host "Azure Container App criada: $ContainerApp"
+Write-Host "Azure Container App criada: $ContainerApp no resource group $ResourceGroup"
