@@ -39,6 +39,10 @@ Ao publicar uma nova rodada, o bot move os jogadores vinculados que já estivere
 
 Os vínculos e o horário da rodada são persistidos no PostgreSQL. Assim, reinicializações não apagam os jogadores vinculados nem reiniciam o cronômetro da rodada atual.
 
+## Azure
+
+O projeto já contém Dockerfile, bootstrap de Azure Container Apps e GitHub Actions para deploy automático após cada push na `main`. Consulte [docs/azure-deploy.md](docs/azure-deploy.md).
+
 ## Limitações conhecidas
 
 O Melee não oferece uma API pública estável para esses dados. O bot usa os mesmos endpoints públicos que a página de torneio usa, isolados em `src/melee-source.ts`; se o Melee mudar o HTML/endpoints, apenas esse adaptador precisará ser ajustado. Nenhuma credencial do Melee é armazenada.

@@ -1,0 +1,52 @@
+name: Deploy bot to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  deploy:
+    name: Build image and deploy
+    needs: test
+    # Mantém o workflow seguro antes da configuração inicial da Azure.
+    if: vars.AZURE_CONTAINER_APP != '' && vars.AZURE_CONTAINER_REGISTRY != '' && vars.AZURE_RESOURCE_GROUP != ''
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      ACR_NAME: ${{ vars.AZURE_CONTAINER_REGISTRY }}
+      CONTAINER_APP: ${{ vars.AZURE_CONTAINER_APP }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      IMAGE_NAME: swu-weekly
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure login via OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Build and push image to Azure Container Registry
+        run: |
+          az acr build --registry "$ACR_NAME" --image "$IMAGE_NAME:${GITHUB_SHA}" --image "$IMAGE_NAME:latest" .
+      - name: Update the running bot
+        run: |
+          az extension add --name containerapp --upgrade --only-show-errors
+          az containerapp update --name "$CONTAINER_APP" --resource-group "$RESOURCE_GROUP" --image "$ACR_NAME.azurecr.io/$IMAGE_NAME:${GITHUB_SHA}" --output none

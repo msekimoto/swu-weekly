@@ -1,0 +1,37 @@
+# Publicação automática no Azure
+
+O repositório possui um workflow que, a cada push na `main`, testa o projeto, cria uma imagem no Azure Container Registry (ACR) e atualiza a Azure Container App. Ele fica deliberadamente inativo até as variáveis Azure abaixo existirem no GitHub.
+
+## 1. Criar os recursos uma única vez
+
+No PowerShell, entre na pasta do projeto, carregue as variáveis do `.env` para a sessão sem mostrá-las e execute o bootstrap:
+
+```powershell
+Get-Content .env | Where-Object { $_ -match '^[^#].+=' } | ForEach-Object {
+  $name, $value = $_ -split '=', 2
+  [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+}
+./infra/bootstrap-azure.ps1 -SubscriptionId '<subscription-id>' -ContainerRegistry '<nome-unico-do-acr>'
+```
+
+O nome do ACR deve ser globalmente único, somente letras/números, e a senha do Discord nunca é enviada ao GitHub. O script entrega o token e a connection string do Neon diretamente como secrets da Container App.
+
+## 2. Autorizar GitHub Actions com OIDC
+
+Crie uma identidade federada para `repo:msekimoto/swu-weekly:environment:production`, com permissão **Contributor** no resource group. Cadastre estes *GitHub Actions secrets*:
+
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+
+Cadastre estes *GitHub Actions variables*:
+
+- `AZURE_RESOURCE_GROUP` (por padrão `rg-swu-weekly`)
+- `AZURE_CONTAINER_REGISTRY` (somente o nome, sem `.azurecr.io`)
+- `AZURE_CONTAINER_APP` (por padrão `swu-weekly-bot`)
+
+OIDC evita guardar um segredo de Azure de longa duração no GitHub. A ação só receberá um token para a identidade federada configurada.
+
+## 3. Deploys seguintes
+
+Faça push na `main`. A workflow **Deploy bot to Azure** aparecerá em Actions. Ela sempre roda testes; só executa o deploy depois que as três variables Azure estiverem configuradas.
