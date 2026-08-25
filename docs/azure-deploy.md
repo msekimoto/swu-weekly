@@ -2,7 +2,17 @@
 
 O repositório possui um workflow que, a cada push na `main`, testa o projeto, cria uma imagem no Azure Container Registry (ACR) e atualiza a Azure Container App. Ele fica deliberadamente inativo até as variáveis Azure abaixo existirem no GitHub.
 
-## 1. Criar os recursos uma única vez
+## 1. Inicializar tudo uma única vez
+
+O caminho recomendado é executar um único script, que cria a infraestrutura, configura OIDC e cadastra secrets/variables no GitHub:
+
+```powershell
+./infra/init-azure-project.ps1
+```
+
+Ele usa a assinatura Azure já selecionada e gera um nome único para o ACR. Para selecionar outra assinatura ou definir um nome de ACR, passe `-SubscriptionId` e `-ContainerRegistry`.
+
+## Alternativa: criar somente os recursos Azure
 
 No PowerShell, entre na pasta do projeto, carregue as variáveis do `.env` para a sessão sem mostrá-las e execute o bootstrap:
 
@@ -30,7 +40,7 @@ Cadastre estes *GitHub Actions variables*:
 - `AZURE_CONTAINER_REGISTRY` (somente o nome, sem `.azurecr.io`)
 - `AZURE_CONTAINER_APP` (por padrão `swu-weekly-bot`)
 
-OIDC evita guardar um segredo de Azure de longa duração no GitHub. A ação só receberá um token para a identidade federada configurada.
+OIDC evita guardar um segredo de Azure de longa duração no GitHub. A ação só receberá um token para a identidade federada configurada. O `init-azure-project.ps1` automatiza toda esta seção.
 
 ## 3. Deploys seguintes
 
