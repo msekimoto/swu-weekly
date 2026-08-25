@@ -8,6 +8,7 @@ Bot de acompanhamento para torneios semanais de **Star Wars: Unlimited**. O Mele
 - Avisa aos 30, 10 e 5 minutos restantes (a duração é configurável).
 - Publica resultados que chegarem ao Melee e a classificação quando a rodada termina.
 - Disponibiliza `/rodada`, `/classificacao`, `/melee` e `/publicar-rodada`.
+- Move jogadores vinculados que estejam em voz para a sala `01`–`16` correspondente à mesa.
 
 O bot não envia resultados nem cria pareamentos no Melee. Essas ações continuam no Tournament Controller, que é a fonte de verdade.
 
@@ -24,6 +25,16 @@ No Discord Developer Portal, crie uma aplicação/bot e habilite os escopos `bot
 - `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID` e `DISCORD_CHANNEL_ID`.
 - `DISCORD_GUILD_ID` no servidor de testes, para que os comandos sejam registrados imediatamente.
 - `MELEE_TOURNAMENT_ID=457371` para o torneio teste atual.
+
+## Salas de voz por mesa
+
+Crie as salas de voz com o número de mesa no início do nome, por exemplo `01 | HOME ONE`, `02 | VICTOR TWO`, até `16`. Dê ao cargo do bot a permissão **Move Members**. Cada jogador deve executar uma única vez:
+
+```
+/vincular-melee nome:Seu nome no Melee
+```
+
+Ao publicar uma nova rodada, o bot move os jogadores vinculados que já estiverem em uma sala de voz. Quem entrar depois é movido automaticamente para a sala da mesa atual. Um organizador pode executar `/mover-rodada` para mover novamente todos os jogadores conectados.
 
 ## Limitações conhecidas
 
