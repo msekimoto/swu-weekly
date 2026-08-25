@@ -1,0 +1,21 @@
+{
+  "name": "swu-discord-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/index.ts",
+    "test": "tsx --test test/**/*.test.ts"
+  },
+  "dependencies": {
+    "discord.js": "14.21.0",
+    "dotenv": "16.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "tsx": "4.19.4",
+    "typescript": "5.8.3"
+  }
+}
