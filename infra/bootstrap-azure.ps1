@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 function Invoke-Az {
   param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
   & az @Arguments
-  if ($LASTEXITCODE -ne 0) { throw "Falha ao executar: az $($Arguments -join ' ')" }
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao executar um comando da Azure CLI. Consulte a mensagem imediatamente anterior para os detalhes." }
 }
 
 function Test-AzResource {
@@ -60,7 +60,7 @@ Invoke-Az containerapp create `
   --registry-server "$ContainerRegistry.azurecr.io" `
   --registry-username $acrUsername `
   --registry-password $acrPassword `
-  --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 1 --ingress disabled `
+  --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 1 `
   --secrets "discord-token=$env:DISCORD_TOKEN" "database-url-base64=$databaseUrlBase64" `
   --env-vars "DISCORD_TOKEN=secretref:discord-token" "DATABASE_URL_BASE64=secretref:database-url-base64" "DISCORD_APPLICATION_ID=$env:DISCORD_APPLICATION_ID" "DISCORD_GUILD_ID=$env:DISCORD_GUILD_ID" "DISCORD_CHANNEL_ID=$env:DISCORD_CHANNEL_ID" "MELEE_TOURNAMENT_ID=$env:MELEE_TOURNAMENT_ID" "POLL_INTERVAL_SECONDS=30" "ROUND_DURATION_MINUTES=45" "TIMEZONE=America/Sao_Paulo" "ANNOUNCE_ON_START=false" `
   --output none
