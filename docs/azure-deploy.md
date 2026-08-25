@@ -1,4 +1,4 @@
-# Publicação automática no Azure
+# Publicação no Azure
 
 O repositório possui um workflow que, a cada push na `main`, testa o projeto, cria uma imagem no Azure Container Registry (ACR) e atualiza a Azure Container App. Ele fica deliberadamente inativo até as variáveis Azure abaixo existirem no GitHub.
 
@@ -45,3 +45,13 @@ OIDC evita guardar um segredo de Azure de longa duração no GitHub. A ação s�
 ## 3. Deploys seguintes
 
 Faça push na `main`. A workflow **Deploy bot to Azure** aparecerá em Actions. Ela sempre roda testes; só executa o deploy depois que as três variables Azure estiverem configuradas.
+
+## Deploy manual (recomendado sem permissão no Microsoft Entra ID)
+
+Se a conta não puder criar um App Registration no Microsoft Entra ID, o bot continua hospedado normalmente na Container App, mas o GitHub Actions não conseguirá autenticar na Azure. Para publicar uma alteração a partir do seu computador já autenticado na Azure, execute:
+
+```powershell
+./infra/deploy-azure-manual.ps1
+```
+
+O script cria uma imagem com a revisão Git atual no ACR e atualiza a Container App. Ele não lê nem imprime o `.env`, não altera os secrets do bot e não requer OIDC. Para atualizar token do Discord ou connection string do Neon, altere-os diretamente nos secrets da Container App antes do deploy.
