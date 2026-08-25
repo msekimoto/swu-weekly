@@ -13,5 +13,5 @@ export function standingsEmbed(snapshot: TournamentSnapshot) {
   return new EmbedBuilder().setColor(0xffc107).setTitle(`Classificação — ${snapshot.round.name}`).setURL(meleeUrl(snapshot.tournamentId)).setDescription(rows || "Classificação ainda não disponível.").setFooter({ text: "Fonte oficial: Melee.gg" }).setTimestamp(snapshot.observedAt);
 }
 
-export function resultsText(matches: Match[]) { return matches.map((match) => `Mesa ${match.table}: **${match.playerOne} ${match.result} ${match.playerTwo}**`).join("\n"); }
+export function resultsText(matches: Match[]) { return matches.map((match) => `Mesa ${match.table}: **${match.playerOne} × ${match.playerTwo}** — ${match.result}`).join("\n"); }
 function formatMatch(match: Match) { return `**Mesa ${match.table}** — ${match.playerOne} × ${match.playerTwo}${match.result ? ` (${match.result})` : ""}`; }

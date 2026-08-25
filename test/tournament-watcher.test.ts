@@ -14,7 +14,7 @@ test("emite atualização quando um resultado chega do Melee", async () => {
   watcher.on("event", (event) => events.push(event.type));
   (watcher as unknown as { source: MeleeSource }).source = source("2-0");
   await watcher.poll();
-  assert.deepEqual(events, ["results-updated", "pairings-changed", "round-complete"]);
+  assert.deepEqual(events, ["results-updated", "round-complete"]);
 });
 
 test("emite snapshot pronto na primeira leitura", async () => {

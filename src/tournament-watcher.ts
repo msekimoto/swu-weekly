@@ -54,5 +54,7 @@ export class TournamentWatcher extends EventEmitter {
   }
 }
 
-function pairingKey(match: Match) { return [match.table, match.playerOne, match.playerTwo, match.result]; }
+// Resultado não faz parte do pareamento. Incluí-lo aqui fazia cada resultado novo
+// disparar, incorretamente, uma republicação da lista inteira de mesas.
+function pairingKey(match: Match) { return [match.table, match.playerOne, match.playerTwo]; }
 function isComplete(matches: Match[]) { return matches.length > 0 && matches.every((match) => Boolean(match.result)); }
