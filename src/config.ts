@@ -18,6 +18,7 @@ export function loadConfig() {
     applicationId: required("DISCORD_APPLICATION_ID"),
     guildId: process.env.DISCORD_GUILD_ID?.trim() || undefined,
     channelId: required("DISCORD_CHANNEL_ID"),
+    databaseUrl: required("DATABASE_URL"),
     tournamentId: required("MELEE_TOURNAMENT_ID"),
     pollIntervalMs: positiveInteger("POLL_INTERVAL_SECONDS", 30) * 1_000,
     roundDurationMs: positiveInteger("ROUND_DURATION_MINUTES", 60) * 60_000,

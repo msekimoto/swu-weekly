@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, PermissionFlagsBits, REST, Routes, SlashCommandBuilder, type GuildMember, type SendableChannels } from "discord.js";
-import { join } from "node:path";
 import { loadConfig } from "./config.js";
+import { Database, RoundStateStore } from "./database.js";
 import { roundEmbed, resultsText, standingsEmbed } from "./messages.js";
 import { MeleePublicSource } from "./melee-source.js";
 import { PlayerLinkStore } from "./player-links.js";
@@ -21,12 +21,16 @@ const commands = [
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
 const watcher = new TournamentWatcher(new MeleePublicSource(), config.tournamentId, config.pollIntervalMs);
-const playerLinks = new PlayerLinkStore(join(process.cwd(), "data", "player-links.json"));
+const database = new Database(config.databaseUrl);
+const playerLinks = new PlayerLinkStore(database, config.guildId ?? "");
+const roundState = new RoundStateStore(database);
 let roundStartedAt: Date | undefined;
 let timerRoundId: number | undefined;
 
 client.once(Events.ClientReady, async (readyClient) => {
   try {
+    if (!config.guildId) throw new Error("DISCORD_GUILD_ID é obrigatório para este bot.");
+    await database.initialize();
     await registerCommands();
     watcher.start();
     console.log(`Bot conectado como ${readyClient.user.tag}; acompanhando Melee ${config.tournamentId}.`);
@@ -65,6 +69,9 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
 watcher.on("event", async (event: TournamentEvent) => {
   try {
     if (event.type === "snapshot-ready") {
+      const persisted = await roundState.get(config.guildId!, config.tournamentId);
+      roundStartedAt = persisted?.roundId === event.snapshot.round.id ? persisted.startedAt : event.snapshot.observedAt;
+      if (!persisted || persisted.roundId !== event.snapshot.round.id) await roundState.save(config.guildId!, config.tournamentId, event.snapshot.round.id, event.snapshot.round.name, roundStartedAt);
       if (config.announceOnStart) await publishRound(event.snapshot);
       else scheduleRoundTimers(event.snapshot);
     }
@@ -78,6 +85,7 @@ watcher.on("error", (error) => console.error("Falha ao consultar o Melee", error
 
 async function publishRound(snapshot: TournamentSnapshot) {
   roundStartedAt = new Date();
+  await roundState.save(config.guildId!, config.tournamentId, snapshot.round.id, snapshot.round.name, roundStartedAt);
   await (await announcements()).send({ embeds: [roundEmbed(snapshot)] });
   const moved = await moveRoundPlayers(snapshot);
   console.log(`${moved} jogador(es) movido(s) para as salas de ${snapshot.round.name}.`);
@@ -134,5 +142,5 @@ async function registerCommands() {
   await rest.put(route, { body: commands });
 }
 
-process.on("SIGINT", () => { watcher.stop(); client.destroy(); process.exit(0); });
+process.on("SIGINT", () => { watcher.stop(); client.destroy(); void database.close().finally(() => process.exit(0)); });
 client.login(config.discordToken);

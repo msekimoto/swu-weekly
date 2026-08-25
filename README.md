@@ -25,6 +25,7 @@ No Discord Developer Portal, crie uma aplicação/bot e habilite os escopos `bot
 - `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID` e `DISCORD_CHANNEL_ID`.
 - `DISCORD_GUILD_ID` no servidor de testes, para que os comandos sejam registrados imediatamente.
 - `MELEE_TOURNAMENT_ID=457371` para o torneio teste atual.
+- `DATABASE_URL` com a connection string do Neon. O bot cria suas tabelas automaticamente na primeira inicialização.
 
 ## Salas de voz por mesa
 
@@ -35,6 +36,8 @@ Crie as salas de voz com o número de mesa no início do nome, por exemplo `01 |
 ```
 
 Ao publicar uma nova rodada, o bot move os jogadores vinculados que já estiverem em uma sala de voz. Quem entrar depois é movido automaticamente para a sala da mesa atual. Um organizador pode executar `/mover-rodada` para mover novamente todos os jogadores conectados.
+
+Os vínculos e o horário da rodada são persistidos no PostgreSQL. Assim, reinicializações não apagam os jogadores vinculados nem reiniciam o cronômetro da rodada atual.
 
 ## Limitações conhecidas
 
