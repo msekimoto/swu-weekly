@@ -19,12 +19,18 @@ let roundStartedAt: Date | undefined;
 let timerRoundId: number | undefined;
 
 client.once(Events.ClientReady, async (readyClient) => {
-  await registerCommands();
-  const snapshot = await watcher.poll();
-  if (config.announceOnStart) await publishRound(snapshot);
-  else scheduleRoundTimers(snapshot);
-  watcher.start();
-  console.log(`Bot conectado como ${readyClient.user.tag}; acompanhando Melee ${config.tournamentId}.`);
+  try {
+    await registerCommands();
+    const snapshot = await watcher.poll();
+    if (config.announceOnStart) await publishRound(snapshot);
+    else scheduleRoundTimers(snapshot);
+    watcher.start();
+    console.log(`Bot conectado como ${readyClient.user.tag}; acompanhando Melee ${config.tournamentId}.`);
+  } catch (error) {
+    console.error("Não foi possível iniciar o bot. Confirme que ele foi instalado no servidor configurado e que possui acesso ao canal de anúncios.", error);
+    client.destroy();
+    process.exitCode = 1;
+  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
